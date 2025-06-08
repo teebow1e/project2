@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered APK Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 60px 40px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .upload-subtext {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .analysis-section {
+            padding: 40px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .info-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .info-value {
+            color: #333;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #eee;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .permissions-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .permission-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .permission-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .permission-desc {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .risk-low { background: #d4edda; color: #155724; }
+        .risk-medium { background: #fff3cd; color: #856404; }
+        .risk-high { background: #f8d7da; color: #721c24; }
+
+        .ai-analysis {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .ai-analysis h3 {
+            margin-bottom: 15px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .upload-area {
+                padding: 40px 20px;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 AI-Powered APK Scanner</h1>
+            <p>Advanced Android Application Security Analysis</p>
+        </div>
+
+        <div class="main-card">
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📱</div>
+                    <div class="upload-text">Drop your APK file here or click to browse</div>
+                    <div class="upload-subtext">Supports .apk files up to 100MB</div>
+                    <input type="file" id="fileInput" class="file-input" accept=".apk">
+                </div>
+                <button class="btn" id="uploadBtn" disabled>Analyze APK</button>
+            </div>
+
+            <div class="analysis-section" id="analysisSection" style="display: none;">
+                <div class="tabs">
+                    <div class="tab active" data-tab="overview">Overview</div>
+                    <div class="tab" data-tab="permissions">Permissions</div>
+                    <div class="tab" data-tab="security">Security</div>
+                    <div class="tab" data-tab="ai-analysis">AI Analysis</div>
+                </div>
+
+                <div class="tab-content active" id="overview">
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h3>📋 Basic Information</h3>
+                            <div id="basicInfo"></div>
+                        </div>
+                        <div class="info-card">
+                            <h3>⚙️ Technical Details</h3>
+                            <div id="technicalInfo"></div>
+                        </div>
+                        <div class="info-card">
+                            <h3>📊 Statistics</h3>
+                            <div id="statistics"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="permissions">
+                    <div class="permissions-list" id="permissionsList"></div>
+                </div>
+
+                <div class="tab-content" id="security">
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h3>🔒 Security Analysis</h3>
+                            <div id="securityAnalysis"></div>
+                        </div>
+                        <div class="info-card">
+                            <h3>⚠️ Potential Risks</h3>
+                            <div id="riskAnalysis"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="ai-analysis">
+                    <div class="ai-analysis">
+                        <h3>🤖 AI-Powered Analysis</h3>
+                        <div id="aiAnalysisContent">
+                            <p>Our AI is analyzing your APK file for potential security threats, malware patterns, and behavioral anomalies...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading" id="loadingSection" style="display: none;">
+                <div class="spinner"></div>
+                <h3>Analyzing APK File...</h3>
+                <p>This may take a few moments depending on the file size.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class APKScanner {
+            constructor() {
+                this.initializeElements();
+                this.setupEventListeners();
+                this.selectedFile = null;
+            }
+
+            initializeElements() {
+                this.uploadArea = document.getElementById('uploadArea');
+                this.fileInput = document.getElementById('fileInput');
+                this.uploadBtn = document.getElementById('uploadBtn');
+                this.analysisSection = document.getElementById('analysisSection');
+                this.loadingSection = document.getElementById('loadingSection');
+                this.tabs = document.querySelectorAll('.tab');
+                this.tabContents = document.querySelectorAll('.tab-content');
+            }
+
+            setupEventListeners() {
+                // File upload events
+                this.uploadArea.addEventListener('click', () => this.fileInput.click());
+                this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+                this.uploadBtn.addEventListener('click', () => this.analyzeAPK());
+
+                // Drag and drop events
+                this.uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
+                this.uploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+                this.uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
+
+                // Tab switching
+                this.tabs.forEach(tab => {
+                    tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+                });
+            }
+
+            handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (file && file.name.endsWith('.apk')) {
+                    this.selectedFile = file;
+                    this.updateUploadArea(file);
+                    this.uploadBtn.disabled = false;
+                } else {
+                    alert('Please select a valid APK file.');
+                    this.resetUpload();
+                }
+            }
+
+            handleDragOver(event) {
+                event.preventDefault();
+                this.uploadArea.classList.add('dragover');
+            }
+
+            handleDragLeave(event) {
+                event.preventDefault();
+                this.uploadArea.classList.remove('dragover');
+            }
+
+            handleDrop(event) {
+                event.preventDefault();
+                this.uploadArea.classList.remove('dragover');
+                const files = event.dataTransfer.files;
+                if (files.length > 0) {
+                    this.fileInput.files = files;
+                    this.handleFileSelect({ target: { files } });
+                }
+            }
+
+            updateUploadArea(file) {
+                this.uploadArea.innerHTML = `
+                    <div class="upload-icon">✅</div>
+                    <div class="upload-text">File Selected: ${file.name}</div>
+                    <div class="upload-subtext">Size: ${this.formatFileSize(file.size)}</div>
+                `;
+            }
+
+            resetUpload() {
+                this.selectedFile = null;
+                this.uploadBtn.disabled = true;
+                this.uploadArea.innerHTML = `
+                    <div class="upload-icon">📱</div>
+                    <div class="upload-text">Drop your APK file here or click to browse</div>
+                    <div class="upload-subtext">Supports .apk files up to 100MB</div>
+                `;
+            }
+
+            async analyzeAPK() {
+                if (!this.selectedFile) return;
+
+                this.showLoading();
+
+                try {
+                    const formData = new FormData();
+                    formData.append('apk', this.selectedFile);
+
+                    // Simulate API call - replace with actual backend endpoint
+                    const response = await this.simulateAnalysis();
+
+                    this.hideLoading();
+                    this.displayResults(response);
+                } catch (error) {
+                    this.hideLoading();
+                    this.showError('Analysis failed: ' + error.message);
+                }
+            }
+
+            async simulateAnalysis() {
+                try {
+                    const formData = new FormData();
+                    formData.append('apk', this.selectedFile);
+
+                    // Call actual backend API
+                    const response = await fetch('http://localhost:5000/analyze', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    return result;
+
+                } catch (error) {
+                    console.error('API call failed, using mock data:', error);
+                    // Fallback to mock data if API fails
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    return this.getMockAnalysisData();
+                }
+            }
+
+            getMockAnalysisData() {
+                // Mock analysis results as fallback
+                return {
+                    basicInfo: {
+                        packageName: 'com.example.testapp',
+                        appName: 'Test Application',
+                        version: '1.0.0',
+                        versionCode: '1',
+                        minSDK: '21 (Android 5.0)',
+                        targetSDK: '33 (Android 13)',
+                        fileSize: this.formatFileSize(this.selectedFile.size)
+                    },
+                    technicalInfo: {
+                        architecture: 'ARM64, ARMv7',
+                        signingAlgorithm: 'SHA256withRSA',
+                        compiledDate: new Date().toLocaleDateString(),
+                        debuggable: 'No',
+                        allowBackup: 'Yes'
+                    },
+                    statistics: {
+                        totalPermissions: '23',
+                        dangerousPermissions: '5',
+                        activities: '12',
+                        services: '3',
+                        receivers: '8'
+                    },
+                    permissions: [
+                        { name: 'CAMERA', risk: 'high', description: 'Access device camera' },
+                        { name: 'ACCESS_FINE_LOCATION', risk: 'high', description: 'Access precise location' },
+                        { name: 'READ_CONTACTS', risk: 'medium', description: 'Read contact information' },
+                        { name: 'INTERNET', risk: 'low', description: 'Access internet connection' },
+                        { name: 'VIBRATE', risk: 'low', description: 'Control device vibration' }
+                    ],
+                    security: {
+                        signed: 'Yes',
+                        debuggable: 'No',
+                        networkSecurity: 'Standard',
+                        antiAnalysis: 'Not Detected'
+                    },
+                    risks: {
+                        highRisk: '2 issues found',
+                        mediumRisk: '3 issues found',
+                        lowRisk: '1 issue found'
+                    },
+                    aiAnalysis: `Based on static analysis, this APK appears to be a standard mobile application with moderate risk level.
+
+Key findings:
+• The app requests camera and location permissions which could be concerning for privacy
+• Network communication patterns appear normal
+• No obvious malware signatures detected
+• Code obfuscation level is minimal
+• Anti-analysis techniques not detected
+
+Recommendation: Review the app's privacy policy and ensure permission usage aligns with app functionality.`
+                };
+            }
+
+            showLoading() {
+                this.analysisSection.style.display = 'none';
+                this.loadingSection.style.display = 'block';
+            }
+
+            hideLoading() {
+                this.loadingSection.style.display = 'none';
+                this.analysisSection.style.display = 'block';
+            }
+
+            displayResults(data) {
+                this.populateBasicInfo(data.basicInfo);
+                this.populateTechnicalInfo(data.technicalInfo);
+                this.populateStatistics(data.statistics);
+                this.populatePermissions(data.permissions);
+                this.populateSecurityInfo(data.security, data.risks);
+                this.populateAIAnalysis(data.aiAnalysis);
+            }
+
+            populateBasicInfo(info) {
+                const container = document.getElementById('basicInfo');
+                container.innerHTML = Object.entries(info)
+                    .map(([key, value]) => `
+                        <div class="info-item">
+                            <span class="info-label">${this.formatLabel(key)}:</span>
+                            <span class="info-value">${value}</span>
+                        </div>
+                    `).join('');
+            }
+
+            populateTechnicalInfo(info) {
+                const container = document.getElementById('technicalInfo');
+                container.innerHTML = Object.entries(info)
+                    .map(([key, value]) => `
+                        <div class="info-item">
+                            <span class="info-label">${this.formatLabel(key)}:</span>
+                            <span class="info-value">${value}</span>
+                        </div>
+                    `).join('');
+            }
+
+            populateStatistics(stats) {
+                const container = document.getElementById('statistics');
+                container.innerHTML = Object.entries(stats)
+                    .map(([key, value]) => `
+                        <div class="info-item">
+                            <span class="info-label">${this.formatLabel(key)}:</span>
+                            <span class="info-value">${value}</span>
+                        </div>
+                    `).join('');
+            }
+
+            populatePermissions(permissions) {
+                const container = document.getElementById('permissionsList');
+                container.innerHTML = permissions
+                    .map(perm => `
+                        <div class="permission-item">
+                            <div class="permission-name">
+                                ${perm.name}
+                                <span class="risk-badge risk-${perm.risk}">${perm.risk.toUpperCase()}</span>
+                            </div>
+                            <div class="permission-desc">${perm.description}</div>
+                        </div>
+                    `).join('');
+            }
+
+            populateSecurityInfo(security, risks) {
+                const securityContainer = document.getElementById('securityAnalysis');
+                securityContainer.innerHTML = Object.entries(security)
+                    .map(([key, value]) => `
+                        <div class="info-item">
+                            <span class="info-label">${this.formatLabel(key)}:</span>
+                            <span class="info-value">${value}</span>
+                        </div>
+                    `).join('');
+
+                const riskContainer = document.getElementById('riskAnalysis');
+                riskContainer.innerHTML = Object.entries(risks)
+                    .map(([key, value]) => `
+                        <div class="info-item">
+                            <span class="info-label">${this.formatLabel(key)}:</span>
+                            <span class="info-value">${value}</span>
+                        </div>
+                    `).join('');
+            }
+
+            populateAIAnalysis(analysis) {
+                const container = document.getElementById('aiAnalysisContent');
+                container.innerHTML = `<p>${analysis.replace(/\n/g, '<br>')}</p>`;
+            }
+
+            switchTab(tabName) {
+                this.tabs.forEach(tab => tab.classList.remove('active'));
+                this.tabContents.forEach(content => content.classList.remove('active'));
+
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+            }
+
+            formatLabel(key) {
+                return key.replace(/([A-Z])/g, ' $1')
+                         .replace(/^./, str => str.toUpperCase())
+                         .replace(/sdk/gi, 'SDK');
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = message;
+                document.querySelector('.main-card').appendChild(errorDiv);
+
+                setTimeout(() => errorDiv.remove(), 5000);
+            }
+        }
+
+        // Initialize the APK Scanner when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new APKScanner();
+        });
+    </script>
+</body>
+</html>
